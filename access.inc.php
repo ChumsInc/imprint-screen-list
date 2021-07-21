@@ -1,2 +1,2 @@
 <?php
-$allowedGroups = array('web_admin');
+$allowedGroups = array('imprint');
