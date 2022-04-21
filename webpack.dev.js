@@ -37,6 +37,11 @@ module.exports = merge(common, {
         },
         watchFiles: 'src/**/*',
     },
+    historyApiFallback: {
+        rewrites: [
+            {from: '/'}
+        ]
+    },
     devtool: 'source-map',
     plugins: []
 });

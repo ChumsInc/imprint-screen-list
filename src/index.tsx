@@ -1,26 +1,11 @@
 import React from 'react';
-import { render } from 'react-dom';
+import {render} from 'react-dom';
 import {Provider} from 'react-redux';
-import { createStore, applyMiddleware, compose } from 'redux';
-import thunk from 'redux-thunk';
-import reducer from './ducks';
 import App from './app/App';
-import {BrowserRouter} from 'react-router-dom'
-
-declare global {
-    interface Window {
-        __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: typeof compose;
-    }
-}
-
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-const store = createStore(reducer, composeEnhancers(applyMiddleware(thunk)));
+import store from './app/store';
 
 render(
     <Provider store={store}>
-        <BrowserRouter>
-            <App/>
-        </BrowserRouter>
+        <App/>
     </Provider>, document.getElementById('app')
 );

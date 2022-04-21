@@ -2,7 +2,7 @@ import {combineReducers} from 'redux'
 import {ActionInterface, ActionPayload} from 'chums-ducks/dist/ducks/types';
 import {SorterProps} from "../types";
 import {ThunkAction} from "redux-thunk";
-import {RootState} from "../index";
+import {RootState} from "../../app/reducer";
 
 export interface ScreenPayload extends ActionPayload {
     list?: Screen[],
