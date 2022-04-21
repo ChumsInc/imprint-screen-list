@@ -1,16 +1,19 @@
 import React, {FormEvent} from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {selectedScreenSelector} from "./index";
-import {Alert, FieldInput, FormCheck, FormColumn, InputField} from "chums-ducks";
+import {selectCurrentScreen} from "./index";
+import {Alert, FormCheck, FormColumn, Input, InputField} from "chums-ducks";
 import {changeScreenCancelled, changeScreenEntry, deleteScreenEntry, newScreenEntry, saveScreenEntry} from "./actions";
 
-const ScreenEntryEdit:React.FC = () => {
+const ScreenEntryEdit: React.FC = () => {
     const dispatch = useDispatch();
-    const changeHandler = ({field, value}:InputField) => {
+    const selected = useSelector(selectCurrentScreen);
+    const {id, screenId, title, twoSided, active, changed} = selected;
+
+    const changeHandler = ({field, value}: InputField) => {
         dispatch(changeScreenEntry({[field]: value}));
     }
 
-    const onSubmit = (ev:FormEvent) => {
+    const onSubmit = (ev: FormEvent) => {
         ev.preventDefault();
         dispatch(saveScreenEntry());
     }
@@ -29,29 +32,28 @@ const ScreenEntryEdit:React.FC = () => {
         }
     }
 
-    const selected = useSelector(selectedScreenSelector);
-    const {id, screenId, title, twoSided, active, changed} = selected;
 
     return (
         <form onSubmit={onSubmit} className="mt-3">
-            <div className="row g-3" >
+            <div className="row g-3">
                 <h4 className="col-6">Screen: <strong>{screenId || 'new'}</strong></h4>
                 <h4 className="col-6">ID: <strong>{id || 'new'}</strong></h4>
             </div>
-            <FormColumn label="Title" width={8} >
-                <FieldInput field="title" value={title} onChange={changeHandler} required />
+            <FormColumn label="Title" width={8}>
+                <Input type="text" value={title} required
+                       onChange={(ev) => changeHandler({field: 'title', value: ev.target.value})} bsSize="sm"/>
             </FormColumn>
             <FormColumn label="Options" width={8}>
                 <FormCheck label="Two Sided" checked={twoSided}
-                           onClick={() => changeHandler({field:'twoSided', value: !twoSided})}
-                           type="checkbox" inline />
+                           onClick={() => changeHandler({field: 'twoSided', value: !twoSided})}
+                           type="checkbox" inline/>
                 <FormCheck label="Active" checked={active}
-                           onClick={() => changeHandler({field:'active', value: !active})}
-                           type="checkbox" inline />
+                           onClick={() => changeHandler({field: 'active', value: !active})}
+                           type="checkbox" inline/>
             </FormColumn>
             {changed && (
                 <Alert color="warning">
-                    <strong className="bi-exclamation-triangle-fill" /> Don't forget to save!
+                    <strong className="bi-exclamation-triangle-fill"/> Don't forget to save!
                 </Alert>
             )}
             <div className="row g-3">

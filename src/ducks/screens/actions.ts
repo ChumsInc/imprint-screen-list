@@ -19,15 +19,15 @@ import {
     ScreenAction,
     screenEntryByIdSelector,
     screenEntryChanged,
-    screenEntryLoadingSelector,
+    selectCurrentLoading,
     screenEntrySelected,
     screenFilterChanged,
     screenInactiveFilterToggled,
-    screenLoadingSelector,
+    selectScreensLoading,
     ScreenThunkAction,
-    selectedScreenSelector, statusURL
+    selectCurrentScreen, statusURL
 } from "./index";
-import {buildPath, fetchGET, fetchPOST} from "../../fetch";
+import {fetchJSON} from "chums-ducks";
 
 export const filterChanged = (filter: string): ScreenAction => ({type: screenFilterChanged, payload: {filter}});
 export const toggleShowInactive = (): ScreenAction => ({type: screenInactiveFilterToggled});
@@ -35,19 +35,19 @@ export const changeScreenEntry = (change: object): ScreenAction => ({type: scree
 
 export const changeScreenCancelled = (): ScreenThunkAction => (dispatch, getState) => {
     const state = getState();
-    const selected = selectedScreenSelector(state);
+    const selected = selectCurrentScreen(state);
     const screen = screenEntryByIdSelector(selected.id)(state);
     dispatch({type: screenEntrySelected, payload: {selected: screen}});
 }
 
 export const newScreenEntry = (): ScreenThunkAction => (dispatch, getState) => {
     const state = getState();
-    const selected = selectedScreenSelector(state);
+    const selected = selectCurrentScreen(state);
     const newScreen = {...defaultScreen, screenId: selected.screenId};
     dispatch({type: screenEntrySelected, payload: {selected: newScreen}});
 }
 
-export const selectScreenEntry = (selected: Screen): ScreenThunkAction => (dispatch, getState) => {
+export const selectScreenEntry = (selected: Screen): ScreenThunkAction => (dispatch) => {
     dispatch({type: screenEntrySelected, payload: {selected}});
     dispatch(loadScreenList(selected.screenId, selected.id));
 }
@@ -55,13 +55,13 @@ export const selectScreenEntry = (selected: Screen): ScreenThunkAction => (dispa
 export const loadScreenList = (screenId?: number, id?: number): ScreenThunkAction => async (dispatch, getState) => {
     try {
         const state = getState();
-        const loading = screenLoadingSelector(state) || screenEntryLoadingSelector(state);
+        const loading = selectScreensLoading(state) || selectCurrentLoading(state);
         if (loading) {
             return;
         }
         dispatch({type: screenId ? loadScreenEntryRequested : loadScreensRequested, meta: {screenId, id}})
-        const url = buildPath(listURL, {screenId: screenId});
-        const {screens} = await fetchGET(url);
+        const url = listURL.replace(':screenId', encodeURIComponent(screenId || ''));
+        const {screens} = await fetchJSON(url);
         let selected = screenId ? {...defaultScreen, screenId} : undefined;
         if (id) {
             [selected] = (screens as Screen[]).filter(s => s.id === id);
@@ -71,11 +71,16 @@ export const loadScreenList = (screenId?: number, id?: number): ScreenThunkActio
             payload: {list: screens, selected},
             meta: {screenId, id}
         })
-    } catch (err) {
-        console.warn("()", err.message);
+    } catch (error:unknown) {
+        if (error instanceof Error) {
+            return dispatch({
+                type: screenId ? loadScreenEntryFailed : loadScreensFailed,
+                payload: {error, context: screenId ? loadScreenEntryRequested : loadScreensRequested},
+                meta: {screenId, id}
+            });
+        }
         dispatch({
             type: screenId ? loadScreenEntryFailed : loadScreensFailed,
-            payload: {error: err, context: screenId ? loadScreenEntryRequested : loadScreensRequested},
             meta: {screenId, id}
         })
     }
@@ -84,41 +89,51 @@ export const loadScreenList = (screenId?: number, id?: number): ScreenThunkActio
 export const saveScreenEntry = (): ScreenThunkAction => async (dispatch, getState) => {
     try {
         const state = getState();
-        const loading = screenLoadingSelector(state) || screenEntryLoadingSelector(state);
+        const loading = selectScreensLoading(state) || selectCurrentLoading(state);
         if (loading) {
             return;
         }
-        const selected = selectedScreenSelector(state);
+        const selected = selectCurrentScreen(state);
         dispatch({type: saveScreenEntryRequested, meta: {screenId: selected.screenId, id: selected.id}});
-        const url = buildPath(saveURL, {screenId: selected.screenId, id: selected.id || undefined});
-        const {screens} = await fetchPOST(url, selected, {method: selected.id ? 'put' : 'post'});
+        const url = saveURL.replace(':screenId', encodeURIComponent(selected.screenId))
+            .replace(':id', encodeURIComponent(selected.id || ''));
+
+        const {screens} = await fetchJSON(url, {method: selected.id ? 'put' : 'post', body: JSON.stringify(selected)});
         let newScreen = {...defaultScreen, screenId: selected.screenId};
         dispatch({type: saveScreenEntrySucceeded, payload: {list: screens, selected: newScreen}})
-    } catch (err) {
-        console.warn("()", err.message);
-        dispatch({type: saveScreenEntryFailed, payload: {error: err, context: saveScreenEntryRequested}});
+    } catch (error:unknown) {
+        if (error instanceof Error) {
+            console.warn("()", error.message);
+            return dispatch({type: saveScreenEntryFailed, payload: {error, context: saveScreenEntryRequested}});
+        }
+        dispatch({type: saveScreenEntryFailed})
     }
 }
 
 export const deleteScreenEntry = (): ScreenThunkAction => async (dispatch, getState) => {
     try {
         const state = getState();
-        const loading = screenLoadingSelector(state) || screenEntryLoadingSelector(state);
+        const loading = selectScreensLoading(state) || selectCurrentLoading(state);
         if (loading) {
             return;
         }
-        const selected = selectedScreenSelector(state);
+        const selected = selectCurrentScreen(state);
         if (!selected.id || !selected.screenId) {
             return;
         }
         dispatch({type: deleteScreenEntryRequested, meta: {screenId: selected.screenId, id: selected.id}});
-        const url = buildPath(deleteEntryURL, {screenId: selected.screenId, id: selected.id});
-        const {screens} = await fetchPOST(url, selected, {method: 'delete'});
+        const url = deleteEntryURL.replace(':screenId', encodeURIComponent(selected.screenId))
+            .replace(':id', encodeURIComponent(selected.id));
+        // const url = buildPath(deleteEntryURL, {screenId: selected.screenId, id: selected.id});
+        const {screens} = await fetchJSON(url, {method: 'delete'});
         const newScreen = {...defaultScreen, screenId: selected.screenId}
         dispatch({type: deleteScreenEntrySucceeded, payload: {list: screens, selected: newScreen}})
-    } catch (err) {
-        console.warn("()", err.message);
-        dispatch({type: deleteScreenEntryFailed, payload: {error: err, context: deleteScreenEntryRequested}});
+    } catch (error:unknown) {
+        if (error instanceof Error) {
+            console.warn("()", error.message);
+            return dispatch({type: deleteScreenEntryFailed, payload: {error, context: deleteScreenEntryRequested}});
+        }
+        dispatch({type: deleteScreenEntryFailed})
     }
 }
 
@@ -126,23 +141,27 @@ export const saveScreenStatus = (status: boolean): ScreenThunkAction =>
     async (dispatch, getState) => {
         try {
             const state = getState();
-            const loading = screenLoadingSelector(state) || screenEntryLoadingSelector(state);
+            const loading = selectScreensLoading(state) || selectCurrentLoading(state);
             if (loading) {
                 return;
             }
-            const selected = selectedScreenSelector(state);
+            const selected = selectCurrentScreen(state);
             if (!selected.screenId) {
                 return;
             }
-            const url = buildPath(statusURL, {screenId: selected.screenId, active: status ? 1 : 0});
-            const {screens} = await fetchGET(url, {method: 'put'});
+            const url = statusURL.replace(':screenId', encodeURIComponent(selected.screenId))
+                .replace(':active', encodeURIComponent(status ? 1 : 0));
+            const {screens} = await fetchJSON(url, {method: 'put'});
             let newScreen = {...defaultScreen, screenId: selected.screenId}
             if (selected.id) {
                 [newScreen] = (screens as Screen[]).filter(screen => screen.id === selected.id);
             }
             dispatch({type: deleteScreenEntrySucceeded, payload: {list: screens, selected: newScreen}})
-        } catch(err) {
-            console.log("()", err.message);
-            return Promise.reject(err);
+        } catch(error:unknown) {
+            if (error instanceof Error) {
+                console.log("()", error.message);
+                return dispatch({type: deleteScreenEntryFailed, payload: {error, context: deleteScreenEntryRequested}});
+            }
+            dispatch({type: deleteScreenEntryFailed});
         }
     }

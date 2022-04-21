@@ -1,18 +1,17 @@
 import {combineReducers} from 'redux'
-import {ActionInterface} from 'chums-ducks/dist/ducks/types';
+import {ActionInterface, ActionPayload} from 'chums-ducks/dist/ducks/types';
 import {SorterProps} from "../types";
 import {ThunkAction} from "redux-thunk";
 import {RootState} from "../index";
 
+export interface ScreenPayload extends ActionPayload {
+    list?: Screen[],
+    selected?: Screen,
+    change?: object,
+    filter?: string,
+}
 export interface ScreenAction extends ActionInterface {
-    payload?: {
-        list?: Screen[],
-        selected?: Screen,
-        change?: object,
-        error?: Error,
-        context?: string,
-        filter?: string,
-    }
+    payload?: ScreenPayload
 }
 
 export interface ScreenThunkAction  extends ThunkAction<any, RootState, unknown, ScreenAction> {}
@@ -81,11 +80,13 @@ export const screenEntryChanged = 'screens/entryChanged';
 export const screenFilterChanged = 'screens/filterChanged';
 export const screenInactiveFilterToggled = 'screens/inactiveFilterToggled';
 
+export const screenListTableID = 'screenList';
+export const selectedScreenListTableID = 'screenList-Selected';
 
-export const listURL = '/api/operations/imprint/screens/:screenId(\\d+)?';
-export const saveURL = '/api/operations/imprint/screens/:screenId(\\d+)/:id(\\d+)?';
-export const statusURL = '/api/operations/imprint/screens/:screenId(\\d+)/status/:active(1|0)';
-export const deleteEntryURL = '/api/operations/imprint/screens/:screenId(\\d+)/:id(\\d+)';
+export const listURL = '/api/operations/imprint/screens/:screenId';
+export const saveURL = '/api/operations/imprint/screens/:screenId/:id';
+export const statusURL = '/api/operations/imprint/screens/:screenId/status/:active';
+export const deleteEntryURL = '/api/operations/imprint/screens/:screenId/:id';
 
 
 export const screenSorter = ({field, ascending}:ScreenSorterProps) => (a:Screen, b:Screen) => {
@@ -97,7 +98,7 @@ export const screenSorter = ({field, ascending}:ScreenSorterProps) => (a:Screen,
 }
 
 
-export const screenListSelector = (sort:ScreenSorterProps) => (state: RootState):Screen[] => {
+export const selectScreenList = (sort:ScreenSorterProps) => (state: RootState):Screen[] => {
     const {showInactive, filter, list} = state.screens;
     let filterRegex = /^/;
     let filterIDRegex = /^/;
@@ -129,18 +130,19 @@ export const screenEntryByIdSelector = (id:number) => (state:RootState):Screen =
     return entry;
 }
 
-export const screenLoadingSelector = (state:RootState):boolean => state.screens.loading;
-export const screenEntryLoadingSelector = (state:RootState):boolean => state.screens.loadingSelected;
-export const selectedScreenSelector = (state:RootState):Screen => state.screens.selected;
-export const screenFilterSelector = (state:RootState) => state.screens.filter;
-export const showInactiveSelector = (state:RootState) => state.screens.showInactive;
-export const selectedScreenListSelector = (state:RootState):Screen[] => state.screens.list.filter(screen => screen.screenId === state.screens.selected.screenId);
-export const canRecoverSelector = (state:RootState) => {
-    const list = selectedScreenListSelector(state);
+export const selectScreensLoading = (state:RootState):boolean => state.screens.loading;
+export const selectCurrentLoading = (state:RootState):boolean => state.screens.loadingSelected;
+export const selectCurrentScreen = (state:RootState):Screen => state.screens.selected;
+export const selectListFilter = (state:RootState) => state.screens.filter;
+export const selectShowInactive = (state:RootState) => state.screens.showInactive;
+export const selectCurrentScreenLines = (state:RootState):Screen[] => state.screens.list.filter(screen => screen.screenId === state.screens.selected.screenId);
+
+export const selectCanRecover = (state:RootState) => {
+    const list = selectCurrentScreenLines(state);
     return list.length > 0 && list.filter(screen => screen.active).length === 0;
 }
-export const canDestroySelector = (state:RootState) => {
-    const list = selectedScreenListSelector(state);
+export const selectCanDestroy = (state:RootState) => {
+    const list = selectCurrentScreenLines(state);
     return list.length > 0 && list.filter(screen => screen.active).length > 0;
 }
 
@@ -240,6 +242,7 @@ const showInactiveReducer = (state:boolean = defaultState.showInactive, action:S
     default: return state;
     }
 }
+
 export default combineReducers({
     list: listReducer,
     selected: selectedReducer,

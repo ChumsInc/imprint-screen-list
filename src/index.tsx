@@ -4,7 +4,8 @@ import {Provider} from 'react-redux';
 import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import reducer from './ducks';
-import App from './App';
+import App from './app/App';
+import {BrowserRouter} from 'react-router-dom'
 
 declare global {
     interface Window {
@@ -18,6 +19,8 @@ const store = createStore(reducer, composeEnhancers(applyMiddleware(thunk)));
 
 render(
     <Provider store={store}>
-        <App/>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
     </Provider>, document.getElementById('app')
 );

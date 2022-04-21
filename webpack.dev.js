@@ -1,5 +1,4 @@
 const {merge} = require('webpack-merge');
-const webpack = require('webpack');
 const common = require('./webpack.common.js');
 const path = require('path');
 
@@ -17,7 +16,11 @@ const localProxy = {
 module.exports = merge(common, {
     mode: 'development',
     devServer: {
-        contentBase: [path.join(__dirname, 'public'), __dirname],
+        allowedHosts: 'auto',
+        static: [
+            {directory: path.join(process.cwd(), 'public'), watch: false},
+            {directory: process.cwd(), watch: false}
+        ],
         hot: true,
         proxy: {
             '/api': {...localProxy},
@@ -32,14 +35,8 @@ module.exports = merge(common, {
             '/sage/': {...localProxy},
             '/version': {...localProxy},
         },
-        historyApiFallback: {
-            rewrites: [
-                {from: /^apps\/website-buffers/, to: '/'}
-            ]
-        }
+        watchFiles: 'src/**/*',
     },
     devtool: 'source-map',
-    plugins: [
-        new webpack.HotModuleReplacementPlugin(),
-    ]
+    plugins: []
 });

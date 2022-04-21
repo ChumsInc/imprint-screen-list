@@ -15,7 +15,7 @@ $bodyPath = "apps/imprint-screen-list";
 $title = "Imprint Screen List";
 $description = "";
 
-$ui = new WebUI($bodyPath, $title, $description, true, true);
+$ui = new WebUI($bodyPath, $title, $description, true, 5);
 $ui->bodyClassName = 'container-fluid';
 $ui->addManifest('public/js/manifest.json');
 $ui->Send();
