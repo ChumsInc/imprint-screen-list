@@ -8,11 +8,7 @@
     "version": "auto-changelog -p && git add CHANGELOG.md"
   },
   "dependencies": {
-    "-": "^0.0.1",
     "@reduxjs/toolkit": "^1.8.1",
-    "@types/numeral": "^2.0.1",
-    "@types/react-dom": "^17.0.9",
-    "@types/validator": "^13.6.3",
     "chums-ducks": "github:UtahGooner/chums-ducks",
     "classnames": "^2.2.6",
     "numeral": "^2.0.6",
@@ -36,7 +32,10 @@
     "@types/lodash": "^4.14.171",
     "@types/lodash.debounce": "^4.0.6",
     "@types/lodash.isequal": "^4.5.6",
+    "@types/numeral": "^2.0.1",
     "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.9",
+    "@types/validator": "^13.6.3",
     "auto-changelog": "^2.4.0",
     "babel-loader": "^8.0.6",
     "bootstrap": "^5.0.2",
