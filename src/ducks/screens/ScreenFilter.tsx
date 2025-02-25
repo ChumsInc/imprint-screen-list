@@ -1,41 +1,48 @@
-import React, {ChangeEvent} from "react";
-import {Input} from "chums-ducks";
-import {useDispatch, useSelector} from "react-redux";
-import {selectListFilter} from "./index";
-import {filterChanged, loadScreenList} from "./actions";
+import React, {ChangeEvent, useId} from "react";
+import {useSelector} from "react-redux";
+import {selectScreenSearch, setSearch} from "./index";
+import {loadScreenList} from "./actions";
 import ShowInactiveCheckbox from "./ShowInactiveCheckbox";
-import {Link} from "react-router-dom";
+import {Link} from "react-router";
+import {Button, Col, FormControl, InputGroup, Row} from "react-bootstrap";
+import {useAppDispatch} from "@/app/configureStore";
 
-const ScreenFilter: React.FC = () => {
-    const dispatch = useDispatch();
-    const filter = useSelector(selectListFilter);
+const ScreenFilter = () => {
+    const dispatch = useAppDispatch();
+    const value = useSelector(selectScreenSearch);
+    const inputId = useId();
 
-    const handleFilterChange = (ev: ChangeEvent<HTMLInputElement>) => {
-        dispatch(filterChanged(ev.target.value || ''));
+    const changeHandler = (ev: ChangeEvent<HTMLInputElement>) => {
+        dispatch(setSearch(ev.target.value));
     }
 
     const handleLoadClick = () => dispatch(loadScreenList());
 
     return (
-        <div className="row g-3 align-items-baseline">
-            <div className="col-auto">
-                <Input value={filter} onChange={handleFilterChange} type="search"
-                       bsSize="sm"
-                       placeholder="Search"/>
-            </div>
-            <div className="col-auto">
+        <Row className="g-3 align-items-baseline">
+            <Col xs="auto">
+                <InputGroup size="sm">
+                    <InputGroup.Text as="label" htmlFor={inputId}>
+                        <span className="bi-search" aria-label="Search"/>
+                    </InputGroup.Text>
+                    <FormControl type="search" size="sm" id={inputId}
+                                 value={value} onChange={changeHandler}
+                                 placeholder="Search"/>
+                </InputGroup>
+            </Col>
+            <Col xs="auto">
                 <ShowInactiveCheckbox/>
-            </div>
-            <div className="col-auto">
-                <button type="button" className="btn btn-sm btn-primary"
-                        onClick={handleLoadClick}>
+            </Col>
+            <Col/>
+            <Col xs="auto">
+                <Button type="button" variant="primary" size="sm" onClick={handleLoadClick}>
                     Reload
-                </button>
-            </div>
-            <div className="col-auto">
+                </Button>
+            </Col>
+            <Col xs="auto">
                 <Link to={"/print"} className="btn btn-sm btn-outline-secondary">Print</Link>
-            </div>
-        </div>
+            </Col>
+        </Row>
     )
 }
 

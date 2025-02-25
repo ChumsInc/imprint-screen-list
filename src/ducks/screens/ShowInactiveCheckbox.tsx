@@ -1,15 +1,21 @@
-import React from "react";
-import {FormCheck} from "chums-ducks";
-import {useDispatch, useSelector} from "react-redux";
-import {selectShowInactive} from "./index";
-import {toggleShowInactive} from "./actions";
+import React, {ChangeEvent, useId} from "react";
 
-const ShowInactiveCheckbox:React.FC = () => {
-    const dispatch = useDispatch();
+import {useSelector} from "react-redux";
+import {selectShowInactive, setShowInactive} from "./index";
+import {FormCheck} from "react-bootstrap";
+import {useAppDispatch} from "@/app/configureStore";
+
+const ShowInactiveCheckbox = () => {
+    const dispatch = useAppDispatch();
     const showInactive = useSelector(selectShowInactive);
-    const onClick = () => dispatch(toggleShowInactive());
+    const changeHandler = (ev: ChangeEvent<HTMLInputElement>) => {
+        dispatch(setShowInactive(ev.target.checked));
+    }
+    const id = useId();
+
     return (
-        <FormCheck label={"Show Inactive"} checked={showInactive} onClick={onClick} type="checkbox" />
+        <FormCheck id={id} label={"Show Inactive"}
+                   checked={showInactive} onChange={changeHandler} type="checkbox"/>
     )
 }
 

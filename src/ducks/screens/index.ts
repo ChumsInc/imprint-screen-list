@@ -1,253 +1,189 @@
-import {combineReducers} from 'redux'
-import {ActionInterface, ActionPayload} from 'chums-ducks/dist/ducks/types';
-import {SorterProps} from "../types";
-import {ThunkAction} from "redux-thunk";
-import {RootState} from "../../app/reducer";
-
-export interface ScreenPayload extends ActionPayload {
-    list?: Screen[],
-    selected?: Screen,
-    change?: object,
-    filter?: string,
-}
-export interface ScreenAction extends ActionInterface {
-    payload?: ScreenPayload
-}
-
-export interface ScreenThunkAction  extends ThunkAction<any, RootState, unknown, ScreenAction> {}
+import {createEntityAdapter, createSelector, createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {SortProps} from "chums-types";
+import {RootState} from "@/app/configureStore";
+import {ImprintScreen} from "@/ducks/types";
+import {
+    deleteEntryScreenEntry,
+    loadScreenList,
+    loadScreensByScreenId,
+    saveScreenEntry,
+    validateRole
+} from "@/ducks/screens/actions";
+import {screenListSorter} from "@/ducks/screens/utils";
 
 
-export interface Screen {
-    id: number,
-    screenId: number,
-    title: string,
-    twoSided: boolean,
-    active: boolean,
-    timestamp: string,
-    changed?: boolean,
-}
+const screensAdapter = createEntityAdapter<ImprintScreen, number>({
+    selectId: (screen) => screen.id,
+    sortComparer: (a, b) => a.id - b.id,
+})
 
-export type ScreenSortField = keyof Screen;
-
-export interface ScreenState {
-    list: Screen[],
-    selected: Screen,
-    loading: boolean,
-    loadingSelected: boolean,
-    filter: string,
-    showInactive: boolean,
+export interface ScreensSliceExtraState {
+    status: 'idle' | 'loading' | 'saving' | 'deleting' | 'rejected';
+    sort: SortProps<ImprintScreen>;
+    screenId: number | null;
+    search: string;
+    showInactive: boolean;
+    canRecover: boolean;
+    canDestroy: boolean;
+    current: ImprintScreen | null;
+    currentListSort: SortProps<ImprintScreen>;
 }
 
-export const defaultScreen: Screen = {
-    id: 0,
-    screenId: 0,
-    title: '',
-    twoSided: false,
-    active: true,
-    timestamp: '',
-    changed: false,
-}
-
-const defaultState: ScreenState = {
-    list: [],
-    selected: {...defaultScreen},
-    loading: false,
-    loadingSelected: false,
-    filter: '',
+const extraState: ScreensSliceExtraState = {
+    status: 'idle',
+    sort: {field: 'id', ascending: true},
+    screenId: null,
+    search: '',
     showInactive: false,
+    canRecover: false,
+    canDestroy: false,
+    current: null,
+    currentListSort: {field: 'id', ascending: true},
 }
 
-export interface ScreenSorterProps extends SorterProps {
-    field: ScreenSortField,
-}
-
-const defaultSort: ScreenSorterProps = {field: 'title', ascending: true};
-
-export const loadScreensRequested = 'screens/loadRequested';
-export const loadScreensSucceeded = 'screens/loadSucceeded';
-export const loadScreensFailed = 'screens/loadFailed';
-export const loadScreenEntryRequested = 'screens/loadEntryRequested';
-export const loadScreenEntrySucceeded = 'screens/loadEntrySucceeded';
-export const loadScreenEntryFailed = 'screens/loadEntryFailed';
-export const saveScreenEntryRequested = 'screens/saveEntryRequested';
-export const saveScreenEntrySucceeded = 'screens/saveEntrySucceeded';
-export const saveScreenEntryFailed = 'screens/saveEntryFailed';
-export const deleteScreenEntryRequested = 'screens/deleteEntryRequested';
-export const deleteScreenEntrySucceeded = 'screens/deleteEntrySucceeded';
-export const deleteScreenEntryFailed = 'screens/deleteEntryFailed';
-export const screenEntrySelected = 'screens/entrySelected';
-export const screenEntryChanged = 'screens/entryChanged';
-export const screenFilterChanged = 'screens/filterChanged';
-export const screenInactiveFilterToggled = 'screens/inactiveFilterToggled';
-
-export const screenListTableID = 'screenList';
-export const selectedScreenListTableID = 'screenList-Selected';
-
-export const listURL = '/api/operations/imprint/screens/:screenId';
-export const saveURL = '/api/operations/imprint/screens/:screenId/:id';
-export const statusURL = '/api/operations/imprint/screens/:screenId/status/:active';
-export const deleteEntryURL = '/api/operations/imprint/screens/:screenId/:id';
-
-
-export const screenSorter = ({field, ascending}:ScreenSorterProps) => (a:Screen, b:Screen) => {
-    return (
-        a[field] === b[field]
-            ? (a.id > b.id ? 1 : -1)
-            : ((a[field]??'') === (b[field]??'') ? 0 :((a[field]??'') > (b[field]??'') ? 1 : -1))
-    ) * (ascending ? 1 : -1);
-}
-
-
-export const selectScreenList = (sort:ScreenSorterProps) => (state: RootState):Screen[] => {
-    const {showInactive, filter, list} = state.screens;
-    let filterRegex = /^/;
-    let filterIDRegex = /^/;
-    try {
-        filterRegex = new RegExp(filter, 'i');
-        filterIDRegex = new RegExp(`^${filter}$`)
-    } catch (err) {
-    }
-
-    return list.filter(screen => showInactive || screen.active)
-        .filter(screen => !filter
-            || filterRegex.test(screen.title)
-            || filterIDRegex.test(String(screen.id))
-            || filterIDRegex.test(String(screen.screenId))
-        )
-        .sort(screenSorter(sort));
-}
-export const screenListByScreenIDSelector = (screenId: number, sort:ScreenSorterProps) =>
-    (state: RootState):Screen[] => {
-        const {showInactive, list} = state.screens;
-        return list
-            .filter(screen => screen.screenId === screenId)
-            .filter(screen => showInactive || screen.active)
-            .sort(screenSorter(sort));
-    }
-
-export const screenEntryByIdSelector = (id:number) => (state:RootState):Screen => {
-    const [entry] = state.screens.list.filter(screen => screen.id === id);
-    return entry;
-}
-
-export const selectScreensLoading = (state:RootState):boolean => state.screens.loading;
-export const selectCurrentLoading = (state:RootState):boolean => state.screens.loadingSelected;
-export const selectCurrentScreen = (state:RootState):Screen => state.screens.selected;
-export const selectListFilter = (state:RootState) => state.screens.filter;
-export const selectShowInactive = (state:RootState) => state.screens.showInactive;
-export const selectCurrentScreenLines = (state:RootState):Screen[] => state.screens.list.filter(screen => screen.screenId === state.screens.selected.screenId);
-
-export const selectCanRecover = (state:RootState) => {
-    const list = selectCurrentScreenLines(state);
-    return list.length > 0 && list.filter(screen => screen.active).length === 0;
-}
-export const selectCanDestroy = (state:RootState) => {
-    const list = selectCurrentScreenLines(state);
-    return list.length > 0 && list.filter(screen => screen.active).length > 0;
-}
-
-
-const listReducer = (state: Screen[] = defaultState.list, action: ScreenAction): Screen[] => {
-    const {type, payload} = action;
-    switch (type) {
-    case loadScreensSucceeded:
-        if (payload?.list) {
-            const list = payload.list;
-            return [...list].sort(screenSorter(defaultSort))
+const screensSlice = createSlice({
+    name: 'screens',
+    initialState: screensAdapter.getInitialState(extraState),
+    reducers: (create) => ({
+        setScreenSort: (state, action: PayloadAction<SortProps<ImprintScreen>>) => {
+            state.sort = action.payload;
+        },
+        setCurrentScreenSort: (state, action: PayloadAction<SortProps<ImprintScreen>>) => {
+            state.currentListSort = action.payload;
+        },
+        setScreenId: (state, action: PayloadAction<number | null>) => {
+            state.screenId = action.payload;
+        },
+        setSearch: (state, action: PayloadAction<string>) => {
+            state.search = action.payload;
+        },
+        setShowInactive: (state, action: PayloadAction<boolean>) => {
+            state.showInactive = action.payload;
+        },
+        setCurrentScreenItem: (state, action: PayloadAction<ImprintScreen | null>) => {
+            state.current = action.payload;
         }
-        return state;
-    case loadScreenEntrySucceeded:
-    case deleteScreenEntrySucceeded:
-    case saveScreenEntrySucceeded:
-        if (payload?.selected) {
-            const list = payload?.list || [];
-            const screenId = payload.selected.screenId;
-            return [
-                ...state.filter(s => s.screenId !== screenId),
-                ...list,
-            ].sort(screenSorter(defaultSort));
-        }
-        return state;
-    default:
-        return state;
+    }),
+    extraReducers: (builder) => {
+        builder
+            .addCase(loadScreenList.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(loadScreenList.fulfilled, (state, action) => {
+                state.status = 'idle';
+                screensAdapter.setAll(state, action.payload);
+            })
+            .addCase(loadScreenList.rejected, (state) => {
+                state.status = 'rejected'
+            })
+            .addCase(loadScreensByScreenId.pending, (state, action) => {
+                state.status = 'loading';
+                state.screenId = action.meta.arg ? +action.meta.arg : null;
+            })
+            .addCase(loadScreensByScreenId.fulfilled, (state, action) => {
+                state.status = 'idle';
+                state.screenId = action.meta.arg ? +action.meta.arg : null;
+                const existing = Object.values(state.entities)
+                    .filter(s => s.screenId === state.screenId)
+                    .map(s => s.id);
+                screensAdapter.removeMany(state, existing);
+                screensAdapter.addMany(state, action.payload);
+            })
+            .addCase(loadScreensByScreenId.rejected, (state) => {
+                state.status = 'rejected';
+            })
+            .addCase(saveScreenEntry.pending, (state) => {
+                state.status = 'saving';
+            })
+            .addCase(saveScreenEntry.fulfilled, (state, action) => {
+                state.status = 'idle';
+                screensAdapter.upsertMany(state, action.payload);
+                const [entry] = action.payload.filter(e => e.id === state.current?.id);
+                state.current = entry ?? null;
+            })
+            .addCase(saveScreenEntry.rejected, (state) => {
+                state.status = 'rejected';
+            })
+            .addCase(deleteEntryScreenEntry.pending, (state) => {
+                state.status = 'deleting';
+            })
+            .addCase(deleteEntryScreenEntry.fulfilled, (state, action) => {
+                state.status = 'idle';
+                screensAdapter.removeOne(state, action.meta.arg.id);
+                state.current = null;
+            })
+            .addCase(deleteEntryScreenEntry.rejected, (state) => {
+                state.status = 'rejected';
+            })
+            .addCase(validateRole.fulfilled, (state, action) => {
+                state.canDestroy = action.payload;
+                state.canRecover = action.payload;
+            })
+            .addCase(validateRole.rejected, (state) => {
+                state.canDestroy = false;
+                state.canRecover = false;
+            })
+    },
+    selectors: {
+        selectScreenSort: (state) => state.sort,
+        selectScreenId: (state) => state.screenId,
+        selectScreenSearch: (state) => state.search,
+        selectShowInactive: (state) => state.showInactive,
+        selectScreenStatus: (state) => state.status,
+        selectCanRecover: (state) => state.canRecover,
+        selectCanDestroy: (state) => state.canDestroy,
+        selectCurrentScreenEntry: (state) => state.current,
+        selectCurrentListSort: (state) => state.currentListSort,
     }
-}
-
-const selectedReducer = (state:Screen = defaultScreen, action: ScreenAction): Screen => {
-    const {type, payload} = action;
-    switch (type) {
-    case screenEntrySelected:
-    case loadScreenEntrySucceeded:
-    case saveScreenEntrySucceeded:
-    case deleteScreenEntrySucceeded:
-        return payload?.selected || {...defaultScreen};
-    case screenEntryChanged:
-        if (payload?.change) {
-            return {
-                ...state,
-                ...payload.change,
-                changed: true
-            }
-        }
-        return state;
-    default: return state;
-    }
-}
-
-const loadingReducer = (state:boolean = false, action:ScreenAction): boolean => {
-    const {type} = action;
-    switch (type) {
-    case loadScreensRequested:
-        return true;
-    case loadScreensSucceeded:
-    case loadScreensFailed:
-        return false;
-    default: return state;
-    }
-}
-
-const loadingSelectedReducer = (state:boolean = false, action:ScreenAction): boolean => {
-    const {type} = action;
-    switch (type) {
-    case loadScreenEntryRequested:
-    case saveScreenEntryRequested:
-    case deleteScreenEntryRequested:
-        return true;
-    case loadScreenEntrySucceeded:
-    case loadScreenEntryFailed:
-    case saveScreenEntrySucceeded:
-    case saveScreenEntryFailed:
-    case deleteScreenEntrySucceeded:
-    case deleteScreenEntryFailed:
-        return false;
-    default: return state;
-    }
-}
-
-const filterReducer = (state:string = defaultState.filter, action:ScreenAction):string => {
-    const {type, payload} = action;
-    switch (type) {
-    case screenFilterChanged:
-        return payload?.filter || '';
-    default:
-        return state;
-    }
-}
-
-const showInactiveReducer = (state:boolean = defaultState.showInactive, action:ScreenAction):boolean => {
-    const {type} = action;
-    switch (type) {
-    case screenInactiveFilterToggled:
-        return !state;
-    default: return state;
-    }
-}
-
-export default combineReducers({
-    list: listReducer,
-    selected: selectedReducer,
-    loading: loadingReducer,
-    loadingSelected: loadingSelectedReducer,
-    filter: filterReducer,
-    showInactive: showInactiveReducer,
 });
+
+export const {
+    selectScreenSort,
+    selectScreenStatus,
+    selectScreenSearch,
+    selectScreenId,
+    selectShowInactive,
+    selectCanRecover,
+    selectCanDestroy,
+    selectCurrentScreenEntry,
+    selectCurrentListSort,
+} = screensSlice.selectors;
+const screenSelectors = screensAdapter.getSelectors<RootState>(
+    (state) => state.screens,
+)
+
+export const selectScreensList = screenSelectors.selectAll;
+export const selectFilteredScreensList = createSelector(
+    [selectScreensList, selectScreenSearch, selectShowInactive, selectScreenSort],
+    (list, search, showInactive, sort) => {
+        return list.filter(s => !search.trim()
+            || s.title.toLowerCase().includes(search.toLowerCase())
+            || s.screenId.toString().includes(search.toLowerCase())
+        )
+            .filter(s => showInactive || s.active)
+            .sort(screenListSorter(sort))
+    }
+)
+
+export const selectCurrentScreenList = createSelector(
+    [selectScreensList, selectScreenId, selectCurrentListSort],
+    (list, screenId, sort) => {
+        if (!screenId) {
+            return [];
+        }
+        return list.filter(screen => screen.screenId === screenId)
+            .sort(screenListSorter(sort))
+    }
+)
+
+export const {
+    setScreenSort,
+    setSearch,
+    setScreenId,
+    setShowInactive,
+    setCurrentScreenSort,
+    setCurrentScreenItem
+} = screensSlice.actions;
+
+export default screensSlice;
+

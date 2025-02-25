@@ -1,34 +1,57 @@
-import React from "react";
-import {Screen} from "./index";
-import {SortableTable, SortableTableField} from "chums-ducks";
+import React, {ChangeEvent, useEffect} from "react";
+import {SortableTable, SortableTableField, TablePagination} from "@chumsinc/sortable-tables";
+import {ImprintScreen} from "@/ducks/types";
+import {useAppDispatch, useAppSelector} from "@/app/configureStore";
+import {selectFilteredScreensList, selectScreenSort, setScreenId, setScreenSort} from "@/ducks/screens/index";
+import {SortProps} from "chums-types";
 
-const TABLE = 'screenList';
-
-const tableFields: SortableTableField[] = [
-    // {field: 'id', title: 'ID', sortable: true},
+const tableFields: SortableTableField<ImprintScreen>[] = [
     {field: 'screenId', title: 'Screen', sortable: true},
     {field: 'title', title: 'Description', sortable: true},
-    {field: 'twoSided', title: 'Two-Sided', sortable: false, render: ({twoSided}: Screen) => twoSided ? 'Y' : 'N'},
+    {field: 'twoSided', title: 'Two-Sided', sortable: false, render: ({twoSided}) => twoSided ? 'Y' : 'N'},
     {
         field: 'timestamp',
         title: 'Updated',
         sortable: true,
-        render: ({timestamp}: Screen) => new Date(timestamp).toLocaleDateString()
+        render: ({timestamp}) => timestamp ? new Date(timestamp).toLocaleDateString() : null
     },
 ];
 
-const rowClassNames = (row: Screen) => ({'text-danger': !row.active});
+const rowClassNames = (row: ImprintScreen) => ({'text-danger': !row.active});
 
-export interface ScreenListProps {
-    list: Screen[],
-    onSelectRow: (row: Screen) => void,
-}
+const ScreenList = () => {
+    const dispatch = useAppDispatch();
+    const list = useAppSelector(selectFilteredScreensList);
+    const sort = useAppSelector(selectScreenSort);
 
-const ScreenList: React.FC<ScreenListProps> = ({list, onSelectRow}) => {
+    const [page, setPage] = React.useState(0);
+    const [rowsPerPage, setRowsPerPage] = React.useState(25);
+
+    useEffect(() => {
+        setPage(0);
+    }, [list, rowsPerPage]);
+
+    const selectRowHandler = (row: ImprintScreen) => {
+        dispatch(setScreenId(row.screenId));
+    }
+
+    const sortChangeHandler = (sort: SortProps<ImprintScreen>) => {
+        dispatch(setScreenSort(sort));
+    }
+
     return (
-        <SortableTable tableKey={TABLE} keyField="id" fields={tableFields} data={list} size="xs"
-                       rowClassName={rowClassNames}
-                       onSelectRow={onSelectRow}/>
+        <div>
+            <SortableTable fields={tableFields} keyField="id" size="xs"
+                           data={list.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
+                           currentSort={sort} onChangeSort={sortChangeHandler}
+                           rowClassName={rowClassNames}
+                           onSelectRow={selectRowHandler}/>
+            <TablePagination count={list.length} size="sm"
+                             page={page} onChangePage={setPage}
+                             rowsPerPage={rowsPerPage} rowsPerPageProps={{onChange: setRowsPerPage}}
+                             showFirst showLast
+            />
+        </div>
     )
 }
 export default ScreenList;

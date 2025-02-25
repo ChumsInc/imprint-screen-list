@@ -1,11 +1,13 @@
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
-import {useSelector} from "react-redux";
-import {ErrorBoundary, selectTableSort} from "chums-ducks";
-import {Screen, screenListTableID, ScreenSorterProps, selectScreenList} from "./index";
-import {Link} from "react-router-dom";
+import {Link} from "react-router";
+import {ImprintScreen} from "@/ducks/types";
+import {useAppSelector} from "@/app/configureStore";
+import {selectScreensList, selectScreenSort} from "@/ducks/screens/index";
+import {ErrorBoundary} from "react-error-boundary";
+import Alert from "react-bootstrap/Alert";
 
-const ScreenListTable: React.FC<{ list: Screen[] }> = ({list}) => {
+const ScreenListTable = ({list}: { list: ImprintScreen[] }) => {
     return (
         <table className="table table-xs">
             <thead>
@@ -24,7 +26,7 @@ const ScreenListTable: React.FC<{ list: Screen[] }> = ({list}) => {
                     </td>
                     <td>{screen.title}</td>
                     <td className="text-center">{screen.twoSided ? 'Y' : 'N'}</td>
-                    <td>{new Date(screen.timestamp).toLocaleDateString()}</td>
+                    <td>{screen.timestamp ? new Date(screen.timestamp).toLocaleDateString() : 'N/A'}</td>
                 </tr>
             ))}
             </tbody>
@@ -32,15 +34,14 @@ const ScreenListTable: React.FC<{ list: Screen[] }> = ({list}) => {
     )
 }
 
-const PrintableScreenList: React.FC = () => {
-
-    const sort = useSelector(selectTableSort(screenListTableID)) as ScreenSorterProps;
-    const list = useSelector(selectScreenList(sort as ScreenSorterProps));
+const PrintableScreenList = () => {
+    const sort = useAppSelector(selectScreenSort);
+    const list = useAppSelector(selectScreensList);
 
     const html = renderToStaticMarkup(<ScreenListTable list={list}/>)
 
     return (
-        <ErrorBoundary>
+        <ErrorBoundary fallback={<Alert variant="warning">Something went wrong - PrintableScreenList()</Alert>}>
             <div className="container">
                 <div className="row g-3 align-items-baseline">
                     <div className="col">
@@ -54,7 +55,7 @@ const PrintableScreenList: React.FC = () => {
                         </h4>
                     </div>
                     <div className="col-auto">
-                        <Link to="/" className="btn btn-close"/>
+                        <Link to="/list" className="btn btn-close"/>
                     </div>
                 </div>
                 <div dangerouslySetInnerHTML={{__html: html}}></div>
