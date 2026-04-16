@@ -1,7 +1,7 @@
 import {createReducer, isFulfilled, isRejected} from "@reduxjs/toolkit";
 import {addAlert, dismissAlert} from "@/ducks/alerts/actions";
 import {alertSorter} from "@/ducks/alerts/utils";
-import {StyledErrorAlert} from "@/ducks/types";
+import type {StyledErrorAlert} from "@/ducks/types";
 
 export interface AlertsState {
     nextId: number;

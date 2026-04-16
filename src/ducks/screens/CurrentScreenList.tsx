@@ -1,19 +1,18 @@
-import React, {useId, useState} from "react";
+import {useId, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {SortableTable, SortableTableField} from "@chumsinc/sortable-tables";
-import {ImprintScreen} from "@/ducks/types";
+import {SortableTable, type SortableTableField} from "@chumsinc/sortable-tables";
+import type {ImprintScreen} from "@/ducks/types";
 import {useAppSelector} from "@/app/configureStore";
 import {
     selectCurrentListSort,
     selectCurrentScreenEntry,
     selectCurrentScreenList,
-    selectScreenId,
     selectScreenStatus,
     setCurrentScreenItem,
     setCurrentScreenSort
 } from "@/ducks/screens/index";
 import {FormCheck, ProgressBar} from "react-bootstrap";
-import {SortProps} from "chums-types";
+import type {SortProps} from "chums-types";
 
 const tableFields: SortableTableField<ImprintScreen>[] = [
     {field: 'id', title: 'ID', sortable: true},
@@ -39,7 +38,6 @@ const CurrentScreenList = () => {
     const current = useAppSelector(selectCurrentScreenEntry);
     const list = useAppSelector(selectCurrentScreenList);
     const loading = useSelector(selectScreenStatus);
-    const screenId = useAppSelector(selectScreenId);
     const id = useId();
     const [showInactive, setShowInactive] = useState(false);
 
@@ -50,11 +48,6 @@ const CurrentScreenList = () => {
     const rowSelectHandler = (row: ImprintScreen) => {
         dispatch(setCurrentScreenItem(row));
     }
-
-    if (!screenId) {
-        return null;
-    }
-
     return (
         <div className="mt-3">
             {loading !== 'idle' && (

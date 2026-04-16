@@ -1,4 +1,4 @@
-import React, {ChangeEvent, useId} from "react";
+import {type ChangeEvent, useId} from "react";
 import {useSelector} from "react-redux";
 import {selectScreenSearch, setSearch} from "./index";
 import {loadScreenList} from "./actions";

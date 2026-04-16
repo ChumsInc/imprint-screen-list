@@ -11,5 +11,5 @@ $ui = new WebUI2([
     'bodyClassName' => 'container-fluid',
     'contentFile' => 'body.inc.php'
 ]);
-$ui->addManifestJSON('public/js/manifest.json')
+$ui->addViteManifest()
     ->render();

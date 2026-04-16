@@ -1,9 +1,10 @@
-import React, {ChangeEvent, useEffect} from "react";
-import {SortableTable, SortableTableField, TablePagination} from "@chumsinc/sortable-tables";
-import {ImprintScreen} from "@/ducks/types";
+import {useEffect, useState} from "react";
+import {SortableTable, type SortableTableField, TablePagination} from "@chumsinc/sortable-tables";
+import type {ImprintScreen} from "@/ducks/types";
 import {useAppDispatch, useAppSelector} from "@/app/configureStore";
 import {selectFilteredScreensList, selectScreenSort, setScreenId, setScreenSort} from "@/ducks/screens/index";
-import {SortProps} from "chums-types";
+import type {SortProps} from "chums-types";
+import dayjs from "dayjs";
 
 const tableFields: SortableTableField<ImprintScreen>[] = [
     {field: 'screenId', title: 'Screen', sortable: true},
@@ -13,7 +14,7 @@ const tableFields: SortableTableField<ImprintScreen>[] = [
         field: 'timestamp',
         title: 'Updated',
         sortable: true,
-        render: ({timestamp}) => timestamp ? new Date(timestamp).toLocaleDateString() : null
+        render: ({timestamp}) => timestamp ? dayjs(timestamp).format('MM/DD/YYYY') : null
     },
 ];
 
@@ -24,11 +25,13 @@ const ScreenList = () => {
     const list = useAppSelector(selectFilteredScreensList);
     const sort = useAppSelector(selectScreenSort);
 
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(25);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(25);
 
     useEffect(() => {
-        setPage(0);
+        Promise.resolve().then(() => {
+            setPage(0)
+        })
     }, [list, rowsPerPage]);
 
     const selectRowHandler = (row: ImprintScreen) => {

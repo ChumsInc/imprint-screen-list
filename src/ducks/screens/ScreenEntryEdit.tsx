@@ -1,7 +1,7 @@
-import React, {ChangeEvent, FormEvent, useEffect, useId, useState} from "react";
+import {type ChangeEvent, useEffect, useId, useState} from "react";
 import {selectCurrentScreenEntry, selectScreenId, selectScreenStatus} from "./index";
 import {useAppDispatch, useAppSelector} from "@/app/configureStore";
-import {ImprintScreen} from "@/ducks/types";
+import type {ImprintScreen} from "@/ducks/types";
 import {newImprintScreen} from "@/ducks/screens/utils";
 import {deleteEntryScreenEntry, saveScreenEntry} from "@/ducks/screens/actions";
 import {Button, Col, FormCheck, FormControl, InputGroup, Row} from "react-bootstrap";
@@ -24,11 +24,15 @@ const ScreenEntryEdit = () => {
 
     useEffect(() => {
         if (current) {
-            setScreen(current);
+            Promise.resolve().then(() => {
+                setScreen(current);
+            })
             return;
         }
-        setScreen({...newImprintScreen, screenId: screenId ?? 0});
-    }, [current]);
+        Promise.resolve().then(() => {
+            setScreen({...newImprintScreen, screenId: screenId ?? 0});
+        })
+    }, [current, setScreen, screenId]);
 
     const changeHandler = (field: keyof ImprintScreen) => (ev: ChangeEvent<HTMLInputElement>) => {
         switch (field) {
@@ -42,8 +46,7 @@ const ScreenEntryEdit = () => {
         }
     }
 
-    const onSubmit = async (ev: FormEvent) => {
-        ev.preventDefault();
+    const onSubmit = async () => {
         await dispatch(saveScreenEntry(screen));
         if (!screen.id) {
             setScreen({...newImprintScreen, screenId: screenId ?? 0});
@@ -76,13 +79,8 @@ const ScreenEntryEdit = () => {
         }
     }
 
-
-    if (!screenId) {
-        return null;
-    }
-
     return (
-        <form onSubmit={onSubmit} className="mt-3">
+        <form action={onSubmit} className="mt-3">
             <Row className="g-3">
                 <Col xs={12} md={6}>
                     <InputGroup size="sm">

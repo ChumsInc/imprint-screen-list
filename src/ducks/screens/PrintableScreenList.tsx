@@ -1,7 +1,6 @@
-import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {Link} from "react-router";
-import {ImprintScreen} from "@/ducks/types";
+import type {ImprintScreen} from "@/ducks/types";
 import {useAppSelector} from "@/app/configureStore";
 import {selectScreensList, selectScreenSort} from "@/ducks/screens/index";
 import {ErrorBoundary} from "react-error-boundary";

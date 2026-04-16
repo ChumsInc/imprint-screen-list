@@ -1,8 +1,7 @@
-import React from 'react';
 import {useAppDispatch, useAppSelector} from "@/app/configureStore";
 import {selectAlerts} from "@/ducks/alerts/selectors";
 import {dismissAlert} from "@/ducks/alerts/actions";
-import {StyledErrorAlert} from "@/ducks/types";
+import type {StyledErrorAlert} from "@/ducks/types";
 import ContextAlert from "@/ducks/alerts/components/ContextAlert";
 
 

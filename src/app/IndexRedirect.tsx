@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import {useEffect} from 'react';
 import {Outlet, useNavigate} from "react-router";
 
 export default function IndexRedirect() {
@@ -6,7 +6,7 @@ export default function IndexRedirect() {
 
     useEffect(() => {
         nav('/list', {replace: true})
-    }, []);
+    }, [nav]);
 
     return (
         <Outlet />

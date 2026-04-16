@@ -1,7 +1,7 @@
-import React, {useEffect} from 'react';
+import {useEffect} from 'react';
 import PrintableScreenList from "../ducks/screens/PrintableScreenList";
 import Main from "./Main";
-import {HashRouter, Route, Routes, useLocation, useNavigate} from "react-router";
+import {HashRouter, Route, Routes} from "react-router";
 import {ErrorBoundary} from "react-error-boundary";
 import ErrorBoundaryFallbackAlert from "@/app/ErrorBoundaryFallbackAlert";
 import CurrentScreen from "@/app/CurrentScreen";
@@ -21,7 +21,7 @@ const App = () => {
             <ErrorBoundary FallbackComponent={ErrorBoundaryFallbackAlert}>
                 <div>
                     <Routes>
-                        <Route path="/" element={<IndexRedirect />}>
+                        <Route path="/" element={<IndexRedirect/>}>
                             <Route path="list" element={<Main/>}>
                                 <Route path=":screenId" element={<CurrentScreen/>}/>
                             </Route>

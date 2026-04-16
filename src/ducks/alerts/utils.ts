@@ -1,4 +1,4 @@
-import {StyledErrorAlert} from "@/ducks/types";
+import type {StyledErrorAlert} from "@/ducks/types";
 
 
 export const alertSorter = (a: StyledErrorAlert, b: StyledErrorAlert) => a.id - b.id;

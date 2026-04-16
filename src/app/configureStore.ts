@@ -1,6 +1,6 @@
 import {asyncThunkCreator, buildCreateSlice, configureStore} from '@reduxjs/toolkit'
 import {combineReducers} from "redux";
-import {TypedUseSelectorHook, useDispatch, useSelector} from "react-redux";
+import {type TypedUseSelectorHook, useDispatch, useSelector} from "react-redux";
 import alertsReducer from "@/ducks/alerts";
 import {setupListeners} from "@reduxjs/toolkit/query/react";
 import screensSlice from "@/ducks/screens";

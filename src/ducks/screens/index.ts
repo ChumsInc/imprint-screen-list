@@ -1,7 +1,7 @@
-import {createEntityAdapter, createSelector, createSlice, PayloadAction} from "@reduxjs/toolkit";
-import {SortProps} from "chums-types";
-import {RootState} from "@/app/configureStore";
-import {ImprintScreen} from "@/ducks/types";
+import {createEntityAdapter, createSelector, createSlice, type PayloadAction} from "@reduxjs/toolkit";
+import type {SortProps} from "chums-types";
+import type {RootState} from "@/app/configureStore";
+import type {ImprintScreen} from "@/ducks/types";
 import {
     deleteEntryScreenEntry,
     loadScreenList,
@@ -44,7 +44,7 @@ const extraState: ScreensSliceExtraState = {
 const screensSlice = createSlice({
     name: 'screens',
     initialState: screensAdapter.getInitialState(extraState),
-    reducers: (create) => ({
+    reducers: {
         setScreenSort: (state, action: PayloadAction<SortProps<ImprintScreen>>) => {
             state.sort = action.payload;
         },
@@ -63,7 +63,7 @@ const screensSlice = createSlice({
         setCurrentScreenItem: (state, action: PayloadAction<ImprintScreen | null>) => {
             state.current = action.payload;
         }
-    }),
+    },
     extraReducers: (builder) => {
         builder
             .addCase(loadScreenList.pending, (state) => {
@@ -168,9 +168,6 @@ export const selectFilteredScreensList = createSelector(
 export const selectCurrentScreenList = createSelector(
     [selectScreensList, selectScreenId, selectCurrentListSort],
     (list, screenId, sort) => {
-        if (!screenId) {
-            return [];
-        }
         return list.filter(screen => screen.screenId === screenId)
             .sort(screenListSorter(sort))
     }

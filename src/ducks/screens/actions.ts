@@ -1,6 +1,6 @@
 import {createAsyncThunk} from "@reduxjs/toolkit";
-import {ImprintScreen} from "@/ducks/types";
-import {RootState} from "@/app/configureStore";
+import type {ImprintScreen} from "@/ducks/types";
+import type {RootState} from "@/app/configureStore";
 import {
     delScreenEntry,
     fetchPermissions,
@@ -17,7 +17,7 @@ export const loadScreenList = createAsyncThunk<ImprintScreen[], void, { state: R
         return await fetchScreenList();
     },
     {
-        condition: (arg, {getState}) => {
+        condition: (_, {getState}) => {
             const state = getState();
             return selectScreenStatus(state) === 'idle'
         }
@@ -37,7 +37,7 @@ export const loadScreensByScreenId = createAsyncThunk<ImprintScreen[], number | 
         return await fetchScreen(arg);
     },
     {
-        condition: (arg, {getState}) => {
+        condition: (_, {getState}) => {
             const state = getState();
             return selectScreenStatus(state) === 'idle'
         }
@@ -50,7 +50,7 @@ export const saveScreenEntry = createAsyncThunk<ImprintScreen[], ImprintScreen, 
         return await postScreenEntry(arg);
     },
     {
-        condition: (arg, {getState}) => {
+        condition: (_, {getState}) => {
             const state = getState();
             return selectScreenStatus(state) === 'idle'
         }

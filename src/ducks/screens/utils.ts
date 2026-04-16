@@ -1,5 +1,5 @@
-import {SortProps} from "chums-types";
-import {ImprintScreen} from "@/ducks/types";
+import type {SortProps} from "chums-types";
+import type {ImprintScreen} from "@/ducks/types";
 
 export const screenListSorter = (sort: SortProps<ImprintScreen>) => (a: ImprintScreen, b: ImprintScreen) => {
     const {field, ascending} = sort;

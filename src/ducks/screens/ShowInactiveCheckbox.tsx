@@ -1,4 +1,4 @@
-import React, {ChangeEvent, useId} from "react";
+import {type ChangeEvent, useId} from "react";
 
 import {useSelector} from "react-redux";
 import {selectShowInactive, setShowInactive} from "./index";

@@ -1,4 +1,3 @@
-import React from 'react';
 import {Button, Col, Row} from "react-bootstrap";
 import {saveScreenStatus} from "@/ducks/screens/actions";
 import {useAppDispatch} from "@/app/configureStore";
